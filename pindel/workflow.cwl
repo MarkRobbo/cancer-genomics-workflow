@@ -62,7 +62,7 @@ steps:
     step5:
         run: cat_all.cwl
         in:
-            chromosome_pindel_outs: [step3/per_chromosome_pindel_out]
+            chromosome_pindel_outs: [step4/per_chromosome_pindel_out]
         out:
             [all_chromosome_pindel_out]
     step6:
