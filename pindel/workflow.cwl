@@ -8,99 +8,99 @@ requirements:
     - class: MultipleInputFeatureRequirement
     - class: SubworkflowFeatureRequirement
 inputs:
-    reference:
+    input1:
         type: File
         secondaryFiles: [".fai"]
-    tumor_bam:
+    input2:
         type: File
         secondaryFiles: ["^.bai"]
-    normal_bam:
+    input3:
         type: File
         secondaryFiles: ["^.bai"]
-    interval_list:
+    input4:
         type: File
-    insert_size:
+    input5:
         type: int
         default: 400
 outputs:
-    merged_vcf:
+    output1:
         type: File
-        outputSource: index_filtered/indexed_vcf
+        outputSource: step11/indexed_vcf
         secondaryFiles: [".tbi"]
 steps:
-    get_tumor_bam_index:
+    step1:
         run: get_bam_index.cwl
         in:
-            bam: tumor_bam
+            bam: input2
         out:
             [bam_index]
-    get_normal_bam_index:
+    step2:
         run: get_bam_index.cwl
         in:
-            bam: normal_bam
+            bam: input3
         out:
             [bam_index]
-    get_chromosome_list:
+    step3:
         run: get_chromosome_list.cwl
         in: 
-            interval_list: interval_list
+            interval_list: input4
         out:
             [chromosome_list]
-    pindel_cat:
+    step4:
         scatter: chromosome
         run: pindel_cat.cwl
         in:
-            reference: reference
+            reference: input1
             tumor_bam: tumor_bam
             normal_bam: normal_bam
-            tumor_bam_index: [get_tumor_bam_index/bam_index]
-            normal_bam_index: [get_normal_bam_index/bam_index]
-            chromosome: [get_chromosome_list/chromosome_list]
-            insert_size: insert_size
+            tumor_bam_index: [step1/bam_index]
+            normal_bam_index: [step2/bam_index]
+            chromosome: [step3/chromosome_list]
+            insert_size: input5
         out:
             [per_chromosome_pindel_out]
-    cat_all:
+    step5:
         run: cat_all.cwl
         in:
-            chromosome_pindel_outs: [pindel_cat/per_chromosome_pindel_out]
+            chromosome_pindel_outs: [step3/per_chromosome_pindel_out]
         out:
             [all_chromosome_pindel_out]
-    grep:
+    step6:
         run: grep.cwl
         in: 
-           pindel_output: cat_all/all_chromosome_pindel_out
+           pindel_output: step5/all_chromosome_pindel_out
         out:
            [pindel_head] 
-    somaticfilter:
+    step7:
         run: somaticfilter.cwl
         in:
             reference: reference
-            pindel_output_summary: grep/pindel_head
+            pindel_output_summary: step6/pindel_head
         out: 
             [vcf]
-    bgzip:
+    step8:
         run: ../detect_variants/bgzip.cwl
         in: 
-            file: somaticfilter/vcf
+            file: step7/vcf
         out:
             [bgzipped_file]
-    index:
+    step9:
         run: ../detect_variants/index.cwl
         in:
-            vcf: bgzip/bgzipped_file
+            vcf: step7/bgzipped_file
         out:
             [indexed_vcf]
-    region_filter:
+    step10:
         run: ../detect_variants/select_variants.cwl
         in:
             reference: reference
-            vcf: index/indexed_vcf
-            interval_list: interval_list
+            vcf: step9/indexed_vcf
+            interval_list: input4
         out:
             [filtered_vcf]
-    index_filtered:
+    step11:
         run: ../detect_variants/index.cwl
         in:
-            vcf: region_filter/filtered_vcf
+            vcf: step10/filtered_vcf
         out:
             [indexed_vcf]
