@@ -51,8 +51,8 @@ steps:
         run: pindel_cat.cwl
         in:
             reference: input1
-            tumor_bam: tumor_bam
-            normal_bam: normal_bam
+            tumor_bam: input2
+            normal_bam: input3
             tumor_bam_index: [step1/bam_index]
             normal_bam_index: [step2/bam_index]
             chromosome: [step3/chromosome_list]
@@ -74,7 +74,7 @@ steps:
     step7:
         run: somaticfilter.cwl
         in:
-            reference: reference
+            reference: input1
             pindel_output_summary: step6/pindel_head
         out: 
             [vcf]
@@ -93,7 +93,7 @@ steps:
     step10:
         run: ../detect_variants/select_variants.cwl
         in:
-            reference: reference
+            reference: input1
             vcf: step9/indexed_vcf
             interval_list: input4
         out:
