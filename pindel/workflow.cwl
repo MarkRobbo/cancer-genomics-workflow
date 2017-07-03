@@ -87,7 +87,7 @@ steps:
     step9:
         run: ../detect_variants/index.cwl
         in:
-            vcf: step7/bgzipped_file
+            vcf: step8/bgzipped_file
         out:
             [indexed_vcf]
     step10:
